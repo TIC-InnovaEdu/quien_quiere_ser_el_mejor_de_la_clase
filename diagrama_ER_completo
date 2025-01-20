@@ -1,0 +1,17 @@
+digraph {
+	Usuario [label="Usuario
+(id, nombre_usuario, contraseña, correo, rol)"]
+	Partida [label="Partida
+(id, puntuacion, fecha)"]
+	Pregunta [label="Pregunta
+(id, pregunta, opcion_correcta)"]
+	Respuesta [label="Respuesta
+(id, respuesta)"]
+	Usuario -> Pregunta [label="gestiona (1:N)" dir=none]
+	Usuario -> Partida [label="juega (1:N)" dir=none]
+	Pregunta -> Partida [label="participa en (M:N)" dir=none]
+	Usuario -> Respuesta [label="responde (M:N)" dir=none]
+	Pregunta -> Respuesta [label="es respondida en (M:N)" dir=none]
+	Partida -> Respuesta [label="incluye (1:N)" dir=none]
+	Usuario -> Partida [label="tiene puntuación en (1:N)" dir=none]
+}

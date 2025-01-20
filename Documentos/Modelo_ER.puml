@@ -1,0 +1,37 @@
+@startuml
+
+' Definir las entidades como clases
+class Usuario {
+  +int id
+  +String nombre_usuario
+  +String contraseña
+  +String correo
+  +String rol
+}
+
+class Partida {
+  +int id
+  +int puntuacion
+  +Date fecha
+}
+
+class Pregunta {
+  +int id
+  +String pregunta
+  +String opcion_correcta
+}
+
+class Respuesta {
+  +int id
+  +String respuesta
+}
+
+' Relaciones
+Usuario "1" --> "0..*" Partida : juega
+Usuario "1" --> "0..*" Pregunta : gestiona
+Pregunta "0..*" --> "0..*" Partida : participa en
+Usuario "1" --> "0..*" Respuesta : responde
+Partida "1" --> "0..*" Respuesta : incluye
+Pregunta "0..*" --> "0..*" Respuesta : es respondida en
+
+@enduml
