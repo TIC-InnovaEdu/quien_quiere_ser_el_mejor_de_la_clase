@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Preguntas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .float-icon {
+            animation: float 3s ease-in-out infinite;
+            position: fixed; /* Cambiado a fixed para mantener los iconos visibles */
+        }
+
+        .pulse-icon {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.25);
+        }
+
+        /* Estilos para el scroll personalizado */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 min-h-screen">
+    <!-- Iconos flotantes con posición fija -->
+    <div class="fixed left-10 top-20 text-blue-500 opacity-20 float-icon z-0">
+        <i class="fas fa-question-circle text-7xl"></i>
+    </div>
+    <div class="fixed right-20 top-40 text-blue-500 opacity-20 float-icon z-0" style="animation-delay: -1.5s;">
+        <i class="fas fa-lightbulb text-6xl"></i>
+    </div>
+    <div class="fixed left-20 bottom-20 text-blue-500 opacity-20 float-icon z-0" style="animation-delay: -1s;">
+        <i class="fas fa-brain text-6xl"></i>
+    </div>
+    <div class="fixed right-10 bottom-40 text-blue-500 opacity-20 float-icon z-0" style="animation-delay: -2s;">
+        <i class="fas fa-puzzle-piece text-7xl"></i>
+    </div>
+
+    <!-- Contenido principal con z-index mayor -->
+    <div class="container mx-auto px-4 py-8 relative z-10">
+        <!-- Encabezado -->
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center">
+                <i class="fas fa-clipboard-list text-4xl text-blue-600 mr-4 pulse-icon"></i>
+                <h1 class="text-3xl font-bold text-gray-800">Gestión de Preguntas</h1>
+            </div>
+            <a href="/dashboard/profesor" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 transition-colors duration-200">
+                <i class="fas fa-arrow-left"></i>
+                Volver al Dashboard
+            </a>
+        </div>
+
+        <!-- Formulario -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8 card-hover">
+            <form action="/profesor/preguntas" method="POST" class="space-y-6">
+                <input type="hidden" id="preguntaId" name="id">
+
+                <div>
+                    <label for="pregunta" class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-question-circle mr-2 text-blue-500"></i>
+                        Pregunta:
+                    </label>
+                    <input type="text" id="pregunta" name="pregunta" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-200">
+                </div>
+
+                <div>
+                    <label for="respuestas" class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-list-ul mr-2 text-blue-500"></i>
+                        Respuestas (separadas por comas):
+                    </label>
+                    <input type="text" id="respuestas" name="respuestas" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-200">
+                </div>
+
+                <div>
+                    <label for="correcta" class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-check-circle mr-2 text-blue-500"></i>
+                        Índice de la respuesta correcta (0-3):
+                    </label>
+                    <input type="number" id="correcta" name="correcta" min="0" max="3" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-200">
+                </div>
+
+                <button type="submit" id="submitBtn"
+                    class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-plus-circle mr-2"></i>
+                    <span>Agregar Pregunta</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Lista de Preguntas -->
+        <div class="bg-white rounded-lg shadow-lg p-6 card-hover">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-list-alt text-2xl text-blue-600 mr-3 pulse-icon"></i>
+                <h2 class="text-xl font-semibold text-gray-800">Lista de Preguntas</h2>
+            </div>
+            <ul class="space-y-4">
+                <% preguntas.forEach(pregunta => { %>
+                    <li class="border-b border-gray-200 pb-4 last:border-0 hover:bg-gray-50 transition duration-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start gap-4">
+                            <div class="flex-1">
+                                <p class="text-gray-800 font-medium flex items-center">
+                                    <i class="fas fa-question-circle text-blue-500 mr-2"></i>
+                                    <%= pregunta.pregunta %>
+                                </p>
+                                <p class="text-gray-600 mt-2 flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-2"></i>
+                                    <span class="font-semibold">Respuesta correcta:</span>
+                                    <span class="ml-2"><%= pregunta.respuestas[pregunta.correcta] %></span>
+                                </p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="editarPregunta('<%= pregunta._id %>')"
+                                    class="inline-flex items-center px-4 py-2 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition duration-200">
+                                    <i class="fas fa-edit mr-2"></i>
+                                    Editar
+                                </button>
+                                <form action="/profesor/preguntas/eliminar/<%= pregunta._id %>" method="POST" class="inline">
+                                    <button type="submit"
+                                        class="inline-flex items-center px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition duration-200">
+                                        <i class="fas fa-trash-alt mr-2"></i>
+                                        Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                <% }); %>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+       async function editarPregunta(id) {
+    try {
+        const response = await fetch(`/profesor/preguntas/${id}`);
+        const pregunta = await response.json();
+
+        // Preparar formulario para edición
+        document.getElementById("preguntaId").value = id;
+        document.getElementById("pregunta").value = pregunta.pregunta;
+        document.getElementById("respuestas").value = pregunta.respuestas.join(",");
+        document.getElementById("correcta").value = pregunta.correcta;
+
+        // Cambiar acción del formulario a edición
+        document.querySelector("form").action = `/profesor/preguntas/editar/${id}`;
+
+        const submitBtn = document.getElementById("submitBtn");
+        submitBtn.innerHTML = `
+            <i class="fas fa-save mr-2"></i>
+            <span>Actualizar Pregunta</span>
+        `;
+
+        // Scroll suave hacia el formulario
+        document.querySelector("form").scrollIntoView({ behavior: 'smooth' });
+    } catch (error) {
+        console.error('Error al cargar la pregunta:', error);
+        alert('Error al cargar la pregunta. Por favor, intente nuevamente.');
+    }
+}
+    </script>
+</body>
+</html>
