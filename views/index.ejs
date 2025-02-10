@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página de Inicio Bienvenidos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @keyframes anim {
+            0% {
+                color: #555;
+                text-shadow: none;
+            }
+            85% {
+                color: #ffea00;
+                text-shadow: 0 0 1vw #ffc400, 0 0 3vw #f44336;
+            }
+            100% {
+                color: #555;
+                text-shadow: none;
+            }
+        }
+
+        .header-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #555;
+            text-shadow: none;
+            animation: anim 1s infinite linear;
+            margin: 0 5px;
+        }
+
+        .header-text:nth-child(1) { animation-delay: 0.4s; }
+        .header-text:nth-child(2) { animation-delay: 0.8s; }
+        .header-text:nth-child(3) { animation-delay: 1.2s; }
+        .header-text:nth-child(4) { animation-delay: 1.6s; }
+        .header-text:nth-child(5) { animation-delay: 2.0s; }
+        .header-text:nth-child(6) { animation-delay: 2.4s; }
+        .header-text:nth-child(7) { animation-delay: 2.8s; }
+        .header-text:nth-child(8) { animation-delay: 3.2s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .float-icon {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .pulse-icon {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .shimmer-effect {
+            background: linear-gradient(90deg, #ffea00 25%, #ffc400 50%, #ffea00 75%);
+            background-size: 200% 100%;
+            animation: shimmer 3s infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .button-hover {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, #f44336, #ff5722);
+        }
+
+        .button-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px -12px rgba(255, 234, 0, 0.25);
+        }
+
+        .button-hover::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-red-900 to-gray-900 min-h-screen flex flex-col">
+    <!-- Header con la animación original -->
+    <header class="bg-[#171810] py-8 shadow-lg">
+        <ul class="flex justify-center items-center m-0 p-0 list-none">
+            <li class="header-text">¿QUIEN</li>
+            <li class="header-text">QUIERE</li>
+            <li class="header-text">SER</li>
+            <li class="header-text">EL</li>
+            <li class="header-text">MEJOR</li>
+            <li class="header-text">DE</li>
+            <li class="header-text">LA</li>
+            <li class="header-text">CLASE?</li>
+        </ul>
+    </header>
+
+    <!-- Contenedor principal -->
+    <div class="flex-1 flex items-center justify-center px-4 py-12 relative">
+        <!-- Iconos decorativos -->
+        <div class="absolute left-10 top-10 text-yellow-300 opacity-60 float-icon">
+            <i class="fas fa-graduation-cap text-7xl"></i>
+        </div>
+        <div class="absolute right-10 top-20 text-yellow-300 opacity-60 float-icon" style="animation-delay: -1.5s;">
+            <i class="fas fa-book text-6xl"></i>
+        </div>
+        <div class="absolute left-20 bottom-20 text-yellow-300 opacity-60 float-icon" style="animation-delay: -1s;">
+            <i class="fas fa-pencil-alt text-6xl"></i>
+        </div>
+        <div class="absolute right-20 bottom-10 text-yellow-300 opacity-60 float-icon" style="animation-delay: -2s;">
+            <i class="fas fa-medal text-7xl"></i>
+        </div>
+
+        <!-- Tarjeta principal -->
+        <div class="w-full max-w-lg">
+            <div class="bg-gray-900 shadow-2xl rounded-lg p-10 text-center relative overflow-hidden card-hover border border-yellow-500/30">
+                <div class="absolute top-0 right-0 text-yellow-500 opacity-5 text-9xl transform rotate-12 translate-x-1/4 -translate-y-1/4">
+                    <i class="fas fa-users"></i>
+                </div>
+
+                <div class="mb-10 relative">
+                    <i class="fas fa-lock text-6xl text-yellow-400 pulse-icon block mb-6"></i>
+                    <h1 class="text-4xl font-bold shimmer-effect">
+                        INICIA SESIÓN O REGÍSTRATE
+                    </h1>
+                </div>
+
+                <div class="grid gap-6">
+                    <a href="/login"
+                       class="group button-hover text-white py-4 px-8 rounded-xl flex items-center justify-center text-lg font-semibold">
+                        <i class="fas fa-sign-in-alt mr-3 group-hover:scale-110 transition-transform"></i>
+                        Iniciar Sesión
+                        <i class="fas fa-arrow-right ml-3 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all"></i>
+                    </a>
+
+                    <a href="/register"
+                       class="group bg-gradient-to-r from-yellow-500 to-yellow-600 button-hover text-gray-900 py-4 px-8 rounded-xl flex items-center justify-center text-lg font-semibold">
+                        <i class="fas fa-user-plus mr-3 group-hover:scale-110 transition-transform"></i>
+                        Registrarse
+                        <i class="fas fa-arrow-right ml-3 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-yellow-500 py-4 text-center border-t border-yellow-500/30">
+        <div class="container mx-auto px-4 flex items-center justify-center">
+            <i class="fas fa-users mr-3 text-xl pulse-icon"></i>
+            <p class="text-lg shimmer-effect">&copy; Los Aventureros</p>
+        </div>
+    </footer>
+</body>
+</html>

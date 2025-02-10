@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ver Puntajes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Mantenemos tus animaciones existentes */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .float-icon {
+            animation: float 3s ease-in-out infinite;
+            position: fixed;
+        }
+
+        .pulse-icon {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.25);
+        }
+
+        /* Scroll personalizado */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2563eb;
+        }
+
+        .tab-active {
+            border-bottom: 2px solid #2563eb;
+            color: #2563eb;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 min-h-screen">
+    <!-- Mantenemos tus iconos flotantes -->
+    <div class="fixed left-10 top-20 text-blue-500 opacity-20 float-icon z-0">
+        <i class="fas fa-trophy text-7xl"></i>
+    </div>
+    <!-- ... otros iconos flotantes ... -->
+
+    <div class="container mx-auto px-4 py-8 relative z-10">
+        <!-- Encabezado -->
+        <div class="max-w-6xl mx-auto mb-8 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-chart-bar text-4xl text-blue-600 mr-4 pulse-icon"></i>
+                <h1 class="text-3xl font-bold text-gray-800">Puntajes y Estadísticas</h1>
+            </div>
+            <a href="/dashboard/profesor"
+               class="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition duration-200">
+                <i class="fas fa-arrow-left"></i>
+                Volver al Dashboard
+            </a>
+        </div>
+
+        <!-- Tabs de navegación -->
+        <div class="max-w-6xl mx-auto mb-6">
+            <div class="flex space-x-6 border-b border-gray-200">
+                <button onclick="showTab('ranking')" class="tab-active px-4 py-2 text-sm font-medium">
+                    <i class="fas fa-trophy mr-2"></i>Ranking Global
+                </button>
+                <button onclick="showTab('historial')" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600">
+                    <i class="fas fa-history mr-2"></i>Historial de Partidas
+                </button>
+                <button onclick="showTab('estadisticas')" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600">
+                    <i class="fas fa-chart-line mr-2"></i>Estadísticas Detalladas
+                </button>
+            </div>
+        </div>
+
+        <!-- Contenido de las tabs -->
+        <!-- Tab: Ranking Global -->
+        <div id="ranking" class="tab-content max-w-6xl mx-auto">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden card-hover">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-900">Posición</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-900">Alumno</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-900">Puntos Totales</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-900">Partidas Jugadas</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-900">Promedio</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <% estudiantes.forEach((estudiante, index) => { %>
+                                <tr class="hover:bg-gray-50 transition duration-200">
+                                    <td class="px-6 py-4">
+                                        <% if (index < 3) { %>
+                                            <i class="fas fa-medal text-xl <%=
+                                                index === 0 ? 'text-yellow-500' :  // Oro
+                                                index === 1 ? 'text-gray-400' :    // Plata
+                                                'text-yellow-700'                  // Bronce
+                                            %>"></i>
+                                        <% } else { %>
+                                            #<%= index + 1 %>
+                                        <% } %>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">
+                                        <%= estudiante.local.username %>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                                                    <%= estudiante.puntos >= 80 ? 'bg-green-100 text-green-800' :
+                                                       estudiante.puntos >= 60 ? 'bg-blue-100 text-blue-800' :
+                                                       estudiante.puntos >= 40 ? 'bg-yellow-100 text-yellow-800' :
+                                                       'bg-red-100 text-red-800' %>">
+                                            <%= estudiante.puntos %> pts
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <%= estudiante.partidasJugadas || 0 %>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <%= ((estudiante.puntos || 0) / (estudiante.partidasJugadas || 1)).toFixed(1) %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Historial de Partidas -->
+        <div id="historial" class="tab-content max-w-6xl mx-auto hidden">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden card-hover">
+                <div class="p-6">
+                    <div class="mb-4">
+                        <select id="studentSelect" class="w-full md:w-64 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Seleccionar estudiante...</option>
+                            <% estudiantes.forEach(est => { %>
+                                <option value="<%= est._id %>"><%= est.local.username %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div id="historialContent" class="overflow-x-auto">
+                        <!-- El historial se cargará aquí mediante AJAX -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Estadísticas Detalladas -->
+        <div id="estadisticas" class="tab-content max-w-6xl mx-auto hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-lg shadow-lg card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Promedio General</h3>
+                        <i class="fas fa-calculator text-blue-500 text-xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold text-blue-600">
+                        <%= (estudiantes.reduce((sum, est) => sum + est.puntos, 0) / estudiantes.length).toFixed(1) %>
+                    </p>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-lg card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Total Partidas</h3>
+                        <i class="fas fa-gamepad text-green-500 text-xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold text-green-600">
+                        <%= estudiantes.reduce((sum, est) => sum + (est.partidasJugadas || 0), 0) %>
+                    </p>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-lg card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Mejor Puntuación</h3>
+                        <i class="fas fa-trophy text-yellow-500 text-xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold text-yellow-600">
+                        <%= Math.max(...estudiantes.map(est => est.puntos)) %>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función para cambiar entre tabs
+        function showTab(tabId) {
+            // Ocultar todas las tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            // Mostrar la tab seleccionada
+            document.getElementById(tabId).classList.remove('hidden');
+
+            // Actualizar estilos de los botones
+            document.querySelectorAll('button').forEach(btn => {
+                btn.classList.remove('tab-active');
+                if (btn.getAttribute('onclick').includes(tabId)) {
+                    btn.classList.add('tab-active');
+                }
+            });
+        }
+
+        // Función para cargar el historial de un estudiante
+        document.getElementById('studentSelect').addEventListener('change', async function() {
+            const studentId = this.value;
+            if (!studentId) return;
+
+            try {
+                const response = await fetch(`/api/scores/history/${studentId}`);
+                const historial = await response.json();
+
+                const historialHtml = historial.map(partida => `
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-sm text-gray-500">${new Date(partida.fecha).toLocaleDateString()}</p>
+                                <p class="font-medium">${partida.puntos} puntos</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">Respuestas correctas</p>
+                                <p class="font-medium">${partida.respuestasCorrectas}/${partida.totalPreguntas}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('historialContent').innerHTML = historialHtml || '<p class="text-gray-500">No hay partidas registradas</p>';
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('historialContent').innerHTML = '<p class="text-red-500">Error al cargar el historial</p>';
+            }
+        });
+
+        // Mostrar la primera tab por defecto
+        showTab('ranking');
+    </script>
+</body>
+</html>
