@@ -1,25 +1,28 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt-nodejs");
 
-const userSchema = new mongoose.Schema({
-  local: {
-    username: String,
-    password: String,
-    email: String,
-    role: String,
+const userSchema = new mongoose.Schema(
+  {
+    local: {
+      username: { type: String, required: true, trim: true, unique: true },
+      password: { type: String, required: true },
+      email: { type: String, required: true, trim: true, unique: true, lowercase: true },
+      role: {
+        type: String,
+        enum: ["admin", "profesor", "estudiante"],
+        default: "estudiante"
+      },
+    },
+    puntos: {
+      type: Number,
+      default: 0,
+    },
   },
-  puntos: {
-    type: Number,
-    default: 0,  // El valor predeterminado es 0 puntos
-  },
-});
+  { timestamps: true }
+);
 
-userSchema.methods.generateHash = function (password) {
-  return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
-};
-
+// Método simple para validar contraseña
 userSchema.methods.validatePassword = function (password) {
-  return bcrypt.compareSync(password, this.local.password);
+  return this.local.password === password;
 };
 
 module.exports = mongoose.model("User", userSchema, "login");

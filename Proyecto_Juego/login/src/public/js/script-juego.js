@@ -1,113 +1,314 @@
+// Elementos del DOM
 let wheel = document.querySelector("#wheel");
 let button = document.querySelector("#spin");
 let showContainer = document.querySelector(".popup-container");
-let preguntaIndex; // Variable global para almacenar el índice de la pregunta actual
+let popupBox = document.querySelector(".popup-box");
 
-// Usar los puntos que el servidor envió al cargar la página
-let puntos = parseInt(document.getElementById("puntos").innerText.split(": ")[1]);
+// Variables del juego
+let preguntas = [];
+let preguntasRestantes = [];
+let juegoActivo = false;
+let preguntaActual = null;
+let numerosRestantes = Array.from({ length: 12 }, (_, i) => i + 1);
+let rotacionTotal = 0;
 
+// Variables de puntaje
+let puntos = 0;
+let respuestasCorrectas = 0;
+let preguntasRespondidas = 0;
 
-button.addEventListener("click", spinWheel);
+// Constantes
+const ANGULO_POR_NUMERO = 30;
+const CORRECCION_ANGULO = 15;
+const PUNTOS_POR_RESPUESTA_CORRECTA = 10;
+const TOTAL_PREGUNTAS = 12;
 
-const preguntas = [
-  { pregunta: "¿Cuál es la capital de Francia?", respuestas: ["París", "Londres", "Berlín", "Madrid"], correcta: 0 },
-  { pregunta: "¿Cuál es el planeta más grande del sistema solar?", respuestas: ["Marte", "Venus", "Júpiter", "Saturno"], correcta: 2 },
-  { pregunta: "¿Qué animal es conocido como el 'Rey de la Selva'?", respuestas: ["Tigre", "León", "Elefante", "Gorila"], correcta: 1 },
-  { pregunta: "¿Qué elemento químico tiene el símbolo 'O'?", respuestas: ["Oro", "Oxígeno", "Osmio", "Oxalato"], correcta: 1 },
-  { pregunta: "¿Cuál es el río más largo del mundo?", respuestas: ["Nilo", "Amazonas", "Yangtsé", "Misisipi"], correcta: 0 },
-  { pregunta: "¿Cuál es el océano más grande del mundo?", respuestas: ["Atlántico", "Pacífico", "Índico", "Ártico"], correcta: 1 },
-  { pregunta: "¿Quién escribió 'Don Quijote de la Mancha'?", respuestas: ["Miguel de Cervantes", "William Shakespeare", "Gabriel García Márquez", "Jorge Luis Borges"], correcta: 0 },
-  { pregunta: "¿Cuál es el país con la mayor población del mundo?", respuestas: ["India", "Estados Unidos", "China", "Brasil"], correcta: 2 },
-  { pregunta: "¿Cuál es el órgano más grande del cuerpo humano?", respuestas: ["Cerebro", "Hígado", "Piel", "Corazón"], correcta: 2 },
-  { pregunta: "¿En qué continente se encuentra Egipto?", respuestas: ["Asia", "África", "Europa", "América"], correcta: 1 },
-  { pregunta: "¿Cuál es el metal más abundante en la corteza terrestre?", respuestas: ["Hierro", "Cobre", "Aluminio", "Plata"], correcta: 2 },
-  { pregunta: "¿Qué tipo de animal es la ballena?", respuestas: ["Pez", "Anfibio", "Mamífero", "Reptil"], correcta: 2 }
-];
-//aqui esta la ruleta 
-function spinWheel(evt) {
-  let spin = Math.round(Math.random() * 2220);
-  wheel.style.transition = "ease 3s";
-  wheel.style.transform = "rotate(" + spin + "deg)";
+// ====== FUNCIONES DE INICIALIZACIÓN ======
 
-  preguntaIndex = Math.floor(((spin % 360) / 30)); // Cada pregunta ocupa 30 grados
-  mostrarPregunta(preguntaIndex);
+// Verificar estado del juego y cargar preguntas
+async function verificarEstadoJuego() {
+    try {
+        const response = await fetch("/api/estado-juego");
+        const data = await response.json();
+        juegoActivo = data.isActive;
+
+        console.log("📌 Estado del juego:", juegoActivo);
+        await cargarPreguntas();
+
+        if (!juegoActivo) {
+            mostrarMensaje("El juego está desactivado. Espera a que el profesor lo active.");
+            button.disabled = true;
+        } else if (preguntas.length < TOTAL_PREGUNTAS) {
+            mostrarMensaje("Faltan preguntas. Consulta a tu profesor.");
+            button.disabled = true;
+        } else {
+            preguntasRestantes = [...preguntas];
+            button.disabled = false;
+        }
+    } catch (error) {
+        console.error("❌ Error obteniendo el estado del juego:", error);
+        mostrarMensaje("Error al conectar con el servidor. Intenta recargar la página.");
+    }
 }
 
-function mostrarPregunta(index) {
-  const preguntaData = preguntas[index];
-  const popupBox = document.querySelector(".popup-box");
-  
-  // Actualiza el contenido del popup
-  popupBox.innerHTML = `
-    <h1>Pregunta </h1>
-    <p>${preguntaData.pregunta}</p>
-    <ul>
-      ${preguntaData.respuestas.map((respuesta, i) =>
-        `<li>${String.fromCharCode(65 + i)}: ${respuesta}</li>`
-      ).join('')}
-    </ul>
-    <p>Presiona A, B, C o D para seleccionar tu respuesta</p>
-    <button class="close-btn">Cerrar</button>
-  `;
+// Cargar preguntas del servidor
+async function cargarPreguntas() {
+    try {
+        const response = await fetch("/api/preguntas");
+        preguntas = await response.json();
+        console.log("📌 Preguntas cargadas:", preguntas.length);
+    } catch (error) {
+        console.error("❌ Error al cargar preguntas:", error);
+        mostrarMensaje("Error al cargar las preguntas. Intenta recargar la página.");
+    }
+}
 
-  // Muestra la ventana emergente
-  setTimeout(() => {
+// ====== FUNCIONES DE LA RULETA ======
+
+// Girar la ruleta
+function spinWheel() {
+    if (!juegoActivo || preguntas.length < TOTAL_PREGUNTAS) {
+        mostrarMensaje("El juego no está listo para comenzar.");
+        return;
+    }
+
+    if (preguntasRespondidas >= TOTAL_PREGUNTAS) {
+        mostrarMensaje("¡Has completado todas las preguntas!");
+        return;
+    }
+
+    button.disabled = true;
+
+    // Seleccionar número y pregunta
+    const indexNumero = Math.floor(Math.random() * numerosRestantes.length);
+    const numeroSeleccionado = numerosRestantes.splice(indexNumero, 1)[0];
+    preguntaActual = preguntasRestantes.splice(numeroSeleccionado - 1, 1)[0];
+
+    // Girar la ruleta
+    wheel.style.transition = "none";
+    wheel.style.transform = `rotate(0deg)`;
+
+    setTimeout(() => {
+        const vueltasCompletas = Math.floor(Math.random() * 5) + 5;
+        rotacionTotal = 360 * vueltasCompletas + (ANGULO_POR_NUMERO * (numeroSeleccionado - 1)) + CORRECCION_ANGULO;
+
+        wheel.style.transition = "all 3s ease-out";
+        wheel.style.transform = `rotate(${rotacionTotal}deg)`;
+    }, 50);
+
+    setTimeout(() => {
+        mostrarPregunta(preguntaActual);
+        button.disabled = false;
+    }, 3500);
+}
+
+// ====== FUNCIONES DE INTERFAZ ======
+
+// Mostrar mensaje emergente
+function mostrarMensaje(mensaje, esFinal = false) {
+    popupBox.innerHTML = `
+        <h1>${esFinal ? '¡Juego Terminado!' : '¡Atención!'}</h1>
+        <p>${mensaje}</p>
+        <button class="close-btn">Cerrar</button>
+    `;
     showContainer.classList.add("active");
-    // Añade el evento de teclado para seleccionar respuestas
+    document.querySelector(".close-btn").onclick = () => cerrarPopup(true);
+}
+
+// Cerrar popup
+function cerrarPopup(esCierreManual = false) {
+    if (esCierreManual && preguntaActual) {
+        if (confirm('¿Seguro que quieres salir? Perderás esta pregunta.')) {
+            preguntasRespondidas++;
+            preguntaActual = null;
+            actualizarContadorPreguntas();
+
+            if (preguntasRespondidas >= TOTAL_PREGUNTAS) {
+                guardarPuntaje();
+            }
+        } else {
+            // Si el usuario cancela, volver a mostrar la pregunta
+            showContainer.classList.add("active");
+            document.addEventListener("keydown", handleKeyPress);
+            return;
+        }
+    }
+
+    showContainer.classList.remove("active");
+    document.removeEventListener("keydown", handleKeyPress);
+}
+
+// Mostrar pregunta
+function mostrarPregunta(preguntaData) {
+    if (!preguntaData) {
+        mostrarMensaje("Error al seleccionar la pregunta. Intenta nuevamente.");
+        return;
+    }
+
+    popupBox.innerHTML = `
+        <h1>Pregunta ${preguntasRespondidas + 1}/${TOTAL_PREGUNTAS}</h1>
+        <p>${preguntaData.pregunta}</p>
+        <ul>
+            ${preguntaData.respuestas.map((respuesta, i) =>
+                `<li><strong>${String.fromCharCode(65 + i)}:</strong> ${respuesta}</li>`
+            ).join('')}
+        </ul>
+        <p>Presiona A, B, C o D para seleccionar tu respuesta</p>
+        <p class="puntos-actuales">Puntos actuales: ${puntos}</p>
+        <p class="progreso-actual">Progreso: ${((preguntasRespondidas/TOTAL_PREGUNTAS) * 100).toFixed(0)}%</p>
+        <button class="close-btn">Cerrar</button>
+    `;
+
+    showContainer.classList.add("active");
+    document.querySelector(".close-btn").onclick = () => cerrarPopup(true);
     document.addEventListener("keydown", handleKeyPress);
-  }, 3000);
-
-  // Cierra la ventana emergente cuando se hace clic en el botón de cerrar
-  document.querySelector(".close-btn").onclick = cerrarPopup;
 }
 
+// ====== FUNCIONES DE MANEJO DE RESPUESTAS ======
+
+// Manejar teclas presionadas
 function handleKeyPress(event) {
-  const key = event.key.toUpperCase();
-  const validKeys = ['A', 'B', 'C', 'D'];
-  if (validKeys.includes(key)) {
-    const respuestaIndex = validKeys.indexOf(key);
-    verificarRespuesta(respuestaIndex, preguntaIndex);
-  } else {
-    console.log("Tecla no válida:", key);
-  }
+    if (!preguntaActual) return;
+
+    const key = event.key.toUpperCase();
+    const validKeys = ['A', 'B', 'C', 'D'];
+    if (validKeys.includes(key)) {
+        const respuestaIndex = validKeys.indexOf(key);
+        verificarRespuesta(respuestaIndex);
+    } else if (key === 'ESCAPE') {
+        cerrarPopup(true);
+    } else {
+        // Mostrar mensaje si la tecla no es válida
+        const mensajeElement = document.createElement('p');
+        mensajeElement.textContent = 'Use las teclas A, B, C o D para responder';
+        mensajeElement.className = 'text-warning mt-2';
+
+        // Remover mensaje anterior si existe
+        const mensajeAnterior = popupBox.querySelector('.text-warning');
+        if (mensajeAnterior) {
+            mensajeAnterior.remove();
+        }
+
+        popupBox.appendChild(mensajeElement);
+    }
 }
 
-function verificarRespuesta(respuestaIndex, preguntaIndex) {
-  const preguntaData = preguntas[preguntaIndex];
+// Verificar respuesta
+function verificarRespuesta(respuestaIndex) {
+    console.log("Verificando respuesta:", respuestaIndex);
+    cerrarPopup(false);
+    preguntasRespondidas++;
+    console.log("Preguntas respondidas:", preguntasRespondidas, "de", TOTAL_PREGUNTAS);
+    actualizarContadorPreguntas();
 
-  // Cerrar el popup inmediatamente después de verificar la respuesta
-  cerrarPopup();
+    const esCorrecta = respuestaIndex === preguntaActual.correcta;
+    if (esCorrecta) {
+        puntos += PUNTOS_POR_RESPUESTA_CORRECTA;
+        respuestasCorrectas++;
+        console.log("Respuesta correcta. Puntos actuales:", puntos);
+        actualizarPuntos();
+        mostrarMensaje("¡Correcto! +10 puntos");
+    } else {
+        console.log("Respuesta incorrecta");
+        mostrarMensaje(`Incorrecto. La respuesta correcta es: ${preguntaActual.respuestas[preguntaActual.correcta]}`);
+    }
 
-  if (respuestaIndex === preguntaData.correcta) {
-    puntos += 10; // Añadir 10 puntos por cada respuesta correcta
-    document.getElementById("puntos").innerText = "Puntos: " + puntos;
+    console.log("Verificando si el juego terminó:", preguntasRespondidas >= TOTAL_PREGUNTAS);
+    if (preguntasRespondidas >= TOTAL_PREGUNTAS) {
+        console.log("Juego terminado, intentando guardar puntaje...");
+        guardarPuntaje();
+    }
 
-    // Enviar los puntos actualizados al servidor para almacenarlos en la base de datos
-    fetch('/actualizar-puntos', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'CSRF-Token': csrfToken // Asegúrate de manejar el token CSRF si es necesario
-      },
-      body: JSON.stringify({ puntos: puntos })
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log(data.message); // Verificar que el mensaje de éxito se muestra en la consola
-    })
-    .catch(error => {
-      console.error('Error al actualizar los puntos:', error);
+    preguntaActual = null;
+}
+
+// Actualizar contador de preguntas
+function actualizarContadorPreguntas() {
+    const preguntaElement = document.querySelector('.pregunta');
+    if (preguntaElement) {
+        preguntaElement.textContent = `Pregunta: ${preguntasRespondidas}/${TOTAL_PREGUNTAS}`;
+    }
+}
+
+// ====== FUNCIONES DE PUNTAJE ======
+
+// Actualizar puntos en la interfaz
+function actualizarPuntos() {
+    const puntosElement = document.getElementById('puntos');
+    if (puntosElement) {
+        puntosElement.textContent = `Puntos: ${puntos}`;
+    }
+}
+
+// Guardar puntaje
+async function guardarPuntaje() {
+    console.log("Iniciando guardarPuntaje");
+    console.log("Datos a enviar:", {
+        puntos,
+        respuestasCorrectas,
+        totalPreguntas: TOTAL_PREGUNTAS
     });
 
-  } else {
-    alert("Incorrecto. La respuesta correcta es " + preguntaData.respuestas[preguntaData.correcta]);
-  }
+    try {
+        const response = await fetch('/api/guardar-puntaje', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                puntos: puntos,
+                respuestasCorrectas: respuestasCorrectas,
+                totalPreguntas: TOTAL_PREGUNTAS
+            })
+        });
+
+        console.log("Estado de la respuesta:", response.status);
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Error del servidor: ${errorData.message}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ Puntaje guardado:', data);
+        mostrarMensajeFinal();
+    } catch (error) {
+        console.error('❌ Error detallado al guardar puntaje:', error);
+        mostrarMensaje('Error al guardar el puntaje. Por favor, notifica al profesor.');
+    }
 }
 
-function cerrarPopup() {
-  console.log("Cerrando popup...");
-  showContainer.classList.remove("active");
-  document.removeEventListener("keydown", handleKeyPress);
+// Mostrar mensaje final
+function mostrarMensajeFinal() {
+    popupBox.innerHTML = `
+        <h1>¡Juego Terminado!</h1>
+        <div class="resumen-final">
+            <p class="puntaje-final">Puntaje final: ${puntos}</p>
+            <p class="respuestas-correctas">Respuestas correctas: ${respuestasCorrectas}/${TOTAL_PREGUNTAS}</p>
+            <p class="porcentaje">Porcentaje de acierto: ${((respuestasCorrectas/TOTAL_PREGUNTAS) * 100).toFixed(1)}%</p>
+        </div>
+        <div class="botones-finales">
+            <button onclick="window.location.reload()" class="close-btn">Jugar de nuevo</button>
+            <button onclick="window.location.href='/dashboard/alumno'" class="close-btn">Volver al Dashboard</button>
+        </div>
+    `;
+    showContainer.classList.add("active");
+    button.disabled = true;
 }
 
+// ====== INICIALIZACIÓN ======
+document.addEventListener('DOMContentLoaded', async () => {
+    // Cargar puntos existentes del usuario
+    const puntosElement = document.getElementById('puntos');
+    if (puntosElement) {
+        const puntosTexto = puntosElement.textContent;
+        puntos = parseInt(puntosTexto.match(/\d+/) || [0]);
+    }
 
+    await verificarEstadoJuego();
+    actualizarPuntos();
+    actualizarContadorPreguntas();
+});
+
+// Evento del botón de girar
+button.addEventListener("click", spinWheel);

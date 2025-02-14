@@ -1,20 +1,19 @@
-// config/passport.js
 const LocalStrategy = require("passport-local").Strategy;
 const User = require("../app/models/user");
 
 module.exports = function (passport) {
-  // Serialización del usuario
+  // Serialización para la sesión
   passport.serializeUser((user, done) => {
     done(null, user.id);
   });
 
-  // Deserialización del usuario
+  // Deserialización de la sesión
   passport.deserializeUser(async (id, done) => {
     try {
       const user = await User.findById(id);
       done(null, user);
-    } catch (err) {
-      done(err, null);
+    } catch (error) {
+      done(error, null);
     }
   });
 
@@ -25,40 +24,33 @@ module.exports = function (passport) {
       {
         usernameField: "username",
         passwordField: "password",
-        passReqToCallback: true, // Permite pasar la solicitud completa a la callback
+        passReqToCallback: true,
       },
       async (req, username, password, done) => {
         try {
-          const existingUser = await User.findOne({
-            "local.username": username,
-          });
+          // Verificar si el usuario ya existe
+          const existingUser = await User.findOne({ "local.username": username });
           if (existingUser) {
-            return done(
-              null,
-              false,
-              req.flash("registerMessage", "El usuario ya existe")
-            );
+            return done(null, false, req.flash("registerMessage", "El usuario ya existe"));
           }
 
-          // Crear un nuevo usuario
-          const newUser = new User();
-          newUser.local.username = username;
-          newUser.local.password = newUser.generateHash(password);
-          newUser.local.email = req.body.email;
+          // Crear nuevo usuario
+          const newUser = new User({
+            local: {
+              username: username,
+              password: password, // Guardar contraseña sin hash
+              email: req.body.email,
+              role: req.body.email.includes("est.") ? "estudiante" : "profesor"
+            },
+            puntos: req.body.email.includes("est.") ? 0 : undefined
+          });
 
-          // Asignar rol basado en el email
-          if (newUser.local.email.includes("est.")) {
-            newUser.local.role = "estudiante";
-            newUser.puntos = 0; // Asignar puntos solo a estudiantes
-          } else {
-            newUser.local.role = "profesor";
-            newUser.puntos = undefined; // No asignar puntos a los profesores
-          }
-
+          // Guardar usuario
           await newUser.save();
           return done(null, newUser);
-        } catch (err) {
-          return done(err);
+        } catch (error) {
+          console.error("Error en registro:", error);
+          return done(error);
         }
       }
     )
@@ -75,26 +67,21 @@ module.exports = function (passport) {
       },
       async (req, username, password, done) => {
         try {
+          // Buscar usuario
           const user = await User.findOne({ "local.username": username });
           if (!user) {
-            return done(
-              null,
-              false,
-              req.flash("loginMessage", "Usuario no encontrado")
-            );
+            return done(null, false, req.flash("loginMessage", "Usuario no encontrado"));
           }
 
-          if (!user.validatePassword(password)) {
-            return done(
-              null,
-              false,
-              req.flash("loginMessage", "Contraseña incorrecta")
-            );
+          // Validar contraseña directamente
+          if (user.local.password !== password) {
+            return done(null, false, req.flash("loginMessage", "Contraseña incorrecta"));
           }
 
           return done(null, user);
-        } catch (err) {
-          return done(err);
+        } catch (error) {
+          console.error("Error en login:", error);
+          return done(error);
         }
       }
     )

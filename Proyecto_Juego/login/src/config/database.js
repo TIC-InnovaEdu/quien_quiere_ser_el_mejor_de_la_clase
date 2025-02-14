@@ -1,5 +1,3 @@
 module.exports = {
-    'url': 'mongodb+srv://anthony1:12345@practica6.hjh57.mongodb.net/login?retryWrites=true&w=majority&appName=Practica6'
-    
-
-}
+    url: 'mongodb://anthony1:12345@localhost:27017/login?authSource=admin'
+};
